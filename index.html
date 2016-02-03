@@ -1,0 +1,171 @@
+<html>
+	<head>
+		<title>Foo Bar</title>
+		<script src="./js/jquery.js"></script>
+		<script src="./js/jquery-terminal.min.js"></script>
+		<script src="./js/async.js"></script>
+		<link href="./css/jquery.terminal.css" rel="stylesheet"/>
+	</head>
+
+	<body>
+		<div id="term"></div>
+	</body>
+
+	<script>
+		$(function() {
+			console.log("hi");
+			var term;
+
+
+			var commandHandler = function() {};
+		    term = $('body').terminal(function(command, term) {
+		    	commandHandler(command);
+			});
+
+		    // utility functions
+		    function slowPrint(str, onDone) {
+		    	var work = []
+
+		    	function step(i, done) {
+		    		term.set_command(str.substring(0, i));
+		    		setTimeout(done, 50);
+		    	}
+
+		    	for (var i = 1; i <= str.length; ++i) {
+		    		work.push(step.bind(null, i));
+		    	}
+
+		    	work.push(function(done) {
+		    		term.echo('> ' + str);
+		    		term.set_command('');
+		    		done();
+		    	})
+
+		    	console.log(async.series);
+		    	async.series(work, onDone);
+		    }
+
+		    function preprocessor(arrayOfText) {
+		    	return arrayOfText.map(function(val) {
+		    		if (val instanceof Function) {
+		    			return val;
+		    		} else {
+		    			return slowPrint.bind(null, val);
+		    		}
+		    	});
+		    }
+
+		    function wait(time) {
+		    	return function(done) {
+		    		setTimeout(done, time);
+		    	}
+		    }
+
+		    function ask(question, callback) {
+		    	slowPrint(question);
+		    	commandHandler = function(cmd) {
+		    		commandHandler = function() {}
+		    		callback(cmd);
+		    	}
+		    }
+
+
+		    // SHOW THE UI
+
+
+
+
+		    (function() {
+
+		    	var usernames = ['dana'];
+
+		    	var loginLoop = function(done) {
+		    		ask('username? ', function(username) {
+		    			username = username.toLowerCase();
+		    			for (var i = 0; i < usernames.length; ++i) {
+		    				if (usernames[i] == username) {
+		    					slowPrint("Authenticating........... OK", done.bind(null, true));
+		    					return ;
+		    				}
+		    			}
+		    			slowPrint("Authenticating........... DENIED", done.bind(null, false));
+		    		});
+		    	}
+
+
+		    	var message = function(done) {
+
+		    		async.series(preprocessor([
+		    				"Hey Dana!!!",
+		    				wait(100),
+		    				"Suprise!!!",
+		    				wait(400),
+		    				"I've got something to ask you, and I thought this would be a pretty special way of doing it",
+		    				"...",
+		    				function(done) {
+		    					term.clear();
+		    					done();
+		    				},
+		    				"Dana",
+		    				"\tyou're cool",
+		    				"\tyou're unexpected",
+		    				"\tyou make days interesting!",
+		    				"\troses are red... violets are blue... you really need to poo",
+		    				"That was cheezy. But I think thats okay. We like cheasy.",
+		    				"... awkward ...",
+		    			]), function(err) {
+		    				ask("will you be my valentine? (y/n)", function(answer) {
+		    					if (answer.substring(0,1) == 'y') {
+		    						
+		    						var timeTil = Math.round(1455408000 - Date.now()/1000);
+		    						var timeSince = Math.round(Date.now()/1000 - 1453507200);
+		    						
+		    						if (timeTil < 0)
+		    							timeTil = "It's already here";
+
+		    						async.series(preprocessor([
+		    								"Yay!",
+		    								"Happy Valentines day in " + timeTil + " seconds Dana :)!",
+		    								"We've been together " + timeSince + " seconds now (but who's counting)",
+		    								"Thanks for being my valentine",
+		    								"... so cheasy.",
+		    								"Disconnected",
+		    							]));
+
+		    					} else if (answer.substring(0,1) == 'n') {
+		    						
+		    						async.series(preprocessor([
+		    								"... awkward ...",
+		    								"I feel so rejected.",
+		    								"Like lucas by Jasmine.",
+		    								"I cry.",
+		    								":(",
+		    								"Disconnected",
+		    							]))
+
+		    					} else {
+		    						
+		    						slowPrint("The heck... what kind of answer was that?! It didn't even start with a yes or a no. Gosh. Follow directions.\nDisconnected.");
+
+		    					}
+		    				})
+		    			});
+		    	}
+
+
+		    	loginLoop(function(authState) {
+		    		if (authState) {
+		    			setTimeout(function() {
+		    				term.clear();
+		    				message();
+		    			}, 300);
+		    		} else {
+		    			slowPrint("Disconnected.");
+		    		}
+		    	});
+
+
+		    })();
+		});
+	</script>
+</html>
